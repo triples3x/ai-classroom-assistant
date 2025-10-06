@@ -37,6 +37,7 @@ if st.button("Generate Lesson Plan"):
     with st.spinner("Creating your lesson plan..."):
         prompt = f"Create a detailed {duration}-minute lesson plan for AP CSP on {topic}."
         model = genai.GenerativeModel("models/gemini-1.5-flash")
+
         response = model.generate_content(prompt)
         st.success("Lesson plan ready!")
         st.write(response.text)
@@ -45,6 +46,8 @@ if st.button("Generate Lesson Plan"):
 if question:
     with st.spinner("Thinking..."):
         model = genai.GenerativeModel("models/gemini-1.5-flash")
+
         response = model.generate_content(f"Answer this AP CSP question: {question}")
         st.write(response.text)
+
 
