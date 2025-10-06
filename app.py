@@ -1,62 +1,49 @@
-# app.py — AI Classroom Assistant (Roza Shaimurat)
+# app.py – AI Classroom Assistant (Gemini version)
 import streamlit as st
-from openai import OpenAI
 import os
+import google.generativeai as genai
 
 # --- Page Setup ---
-st.set_page_config(page_title="AI Classroom Assistant", page_icon="🤖")
+st.set_page_config(page_title="🤖 AI Classroom Assistant – AP CSP Edition")
 st.title("🤖 AI Classroom Assistant – AP CSP Edition")
 st.caption("AI-generated • Teacher-reviewed • Ethical & Educational")
 
-# --- API Key Setup ---
-API_KEY = os.getenv("OPENAI_API_KEY")
-if not API_KEY:
-    st.warning("⚠️ Please set your OpenAI API key in a .env file.")
-client = OpenAI(api_key=API_KEY)
+# --- API Setup ---
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+if not GEMINI_API_KEY:
+    st.error("⚠️ Please set your GEMINI_API_KEY in Streamlit Secrets.")
+else:
+    genai.configure(api_key=GEMINI_API_KEY)
 
-# --- Sidebar ---
-st.sidebar.header("Settings")
-ethics_mode = st.sidebar.checkbox("Enable Ethics Mode", value=True)
-model = st.sidebar.selectbox("Model", ["gpt-4o-mini", "gpt-4o"], index=0)
+# --- Sidebar (Lesson Planner) ---
+st.sidebar.header("🧠 Lesson Planner")
+topic = st.sidebar.selectbox("Choose an AP CSP topic:", [
+    "Algorithms",
+    "Data Structures",
+    "Abstraction",
+    "Variables and Expressions",
+    "Lists and Data Structures",
+    "The Internet",
+    "Cybersecurity"
+])
+duration = st.sidebar.slider("Lesson Duration (minutes):", 30, 120, 90)
 
-# --- Helper Function ---
-def generate(prompt):
-    try:
-        response = client.responses.create(
-            model=model,
-            input=prompt,
-            temperature=0.7
-        )
-        output = response.output_text
-    except Exception as e:
-        output = f"⚠️ Error: {e}"
-    if ethics_mode:
-        output += "\n\n—\n**Ethics note:** Verify AI suggestions and adapt them for your students."
-    return output
+# --- Student Help Bot ---
+st.subheader("💬 Student Help Bot")
+question = st.text_input("Ask a question about computer science:")
 
-# --- Tabs ---
-tab1, tab2 = st.tabs(["🧠 Lesson Planner", "💬 Student Help Bot"])
+# --- Gemini Logic ---
+if st.button("Generate Lesson Plan"):
+    with st.spinner("Creating your lesson plan..."):
+        prompt = f"Create a detailed {duration}-minute lesson plan for AP CSP on {topic}."
+        model = genai.GenerativeModel("gemini-1.5-flash")
+        response = model.generate_content(prompt)
+        st.success("Lesson plan ready!")
+        st.write(response.text)
+        st.caption("— Ethics note: Verify AI suggestions and adapt them for your students.")
 
-with tab1:
-    st.subheader("Lesson Planner")
-    topic = st.selectbox("Choose an AP CSP topic:", [
-        "Variables and Data Types",
-        "Conditionals and Booleans",
-        "Loops and Iteration",
-        "Lists and Data Structures",
-        "Events and Interactivity",
-        "Algorithms and Abstraction",
-        "Data and Privacy",
-        "AI Ethics and Impacts"
-    ])
-    duration = st.slider("Lesson Duration (minutes):", 30, 120, 60)
-    if st.button("Generate Lesson Plan"):
-        prompt = f"Create a {duration}-minute AP CSP lesson on {topic}. Include: objectives, vocabulary, a mini activity, 3 quiz questions, and an exit ticket."
-        st.write(generate(prompt))
-
-with tab2:
-    st.subheader("Student Help Bot")
-    question = st.text_area("Enter a student's question or concept they struggle with:")
-    if st.button("Explain Concept"):
-        prompt = f"Explain this concept clearly for a high school CS student: {question}. Include an example and a self-check question."
-        st.write(generate(prompt))
+if question:
+    with st.spinner("Thinking..."):
+        model = genai.GenerativeModel("gemini-1.5-flash")
+        response = model.generate_content(f"Answer this AP CSP question: {question}")
+        st.write(response.text)
